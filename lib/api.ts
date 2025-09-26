@@ -29,12 +29,14 @@ export class ApiClient {
       url = `${this.config.baseURL}${endpoint}`
     }
     
-    // Validate URL before making request
-    try {
-      new URL(url)
-    } catch {
-      console.error('Invalid URL:', url)
-      throw new Error(`Invalid URL: ${url}`)
+    // Validate URL before making request (only for absolute URLs)
+    if (url.startsWith('http')) {
+      try {
+        new URL(url)
+      } catch {
+        console.error('Invalid URL:', url)
+        throw new Error(`Invalid URL: ${url}`)
+      }
     }
     
     const controller = new AbortController()
