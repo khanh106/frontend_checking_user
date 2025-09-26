@@ -43,14 +43,22 @@ export class ApiClient {
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout)
 
     try {
+      // Get token from localStorage for API calls
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...(options.headers as Record<string, string>),
+      }
+      
+      if (token && token !== 'undefined' && token !== 'null') {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+      
       const response = await fetch(url, {
         ...options,
         credentials: 'include',
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
+        headers,
       })
 
       clearTimeout(timeoutId)
@@ -69,7 +77,12 @@ export class ApiClient {
           errorData = { message: `HTTP ${response.status}: ${response.statusText}` }
         }
         
-        const errorMessage = (errorData.message as string) || (errorData.error as string) || `API Error: ${response.status}`
+        let errorMessage = (errorData.message as string) || (errorData.error as string) || `API Error: ${response.status}`
+        
+        // Fix [object Object] issue
+        if (typeof errorMessage === 'object') {
+          errorMessage = JSON.stringify(errorMessage)
+        }
         const error = new Error(errorMessage) as Error & {
           code?: string
           status?: number

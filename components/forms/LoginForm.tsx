@@ -49,7 +49,13 @@ function LoginFormContent({ onSuccess }: LoginFormProps) {
       console.error('Login form error:', err)
       if (err instanceof Error) {
         // Hiển thị lỗi cụ thể từ API
-        const errorMessage = err.message || 'Đăng nhập thất bại'
+        let errorMessage = err.message || 'Đăng nhập thất bại'
+        
+        // Fix [object Object] issue
+        if (typeof errorMessage === 'object') {
+          errorMessage = JSON.stringify(errorMessage)
+        }
+        
         setError(errorMessage)
         console.error('Login error details:', {
           message: errorMessage,

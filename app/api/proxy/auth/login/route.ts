@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json(
         { 
-          error: (errorData.message as string) || (errorData.error as string) || 'Login failed',
+          error: typeof errorData.message === 'string' ? errorData.message : 
+                 typeof errorData.error === 'string' ? errorData.error : 
+                 JSON.stringify(errorData.message || errorData.error || 'Login failed'),
           code: (errorData.code as string) || (errorData.error_code as string),
           details: errorData
         },

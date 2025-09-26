@@ -20,9 +20,24 @@ export async function GET(request: NextRequest) {
     })
 
     if (!response.ok) {
-      const errorData = await response.text()
+      let errorData: Record<string, unknown> = {}
+      try {
+        errorData = await response.json()
+      } catch {
+        const errorText = await response.text()
+        errorData = { message: errorText || `HTTP ${response.status}: ${response.statusText}` }
+      }
+      
+      console.error(`[Proxy Me Error] ${response.status}:`, errorData)
+      
       return NextResponse.json(
-        { error: 'Failed to get user info', details: errorData },
+        { 
+          error: typeof errorData.message === 'string' ? errorData.message : 
+                 typeof errorData.error === 'string' ? errorData.error : 
+                 JSON.stringify(errorData.message || errorData.error || 'Failed to get user info'),
+          code: (errorData.code as string) || (errorData.error_code as string),
+          details: errorData
+        },
         { status: response.status }
       )
     }
