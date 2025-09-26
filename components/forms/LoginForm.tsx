@@ -46,8 +46,17 @@ function LoginFormContent({ onSuccess }: LoginFormProps) {
       await login(data, redirectTo)
       onSuccess?.()
     } catch (err) {
+      console.error('Login form error:', err)
       if (err instanceof Error) {
-        setError(err.message)
+        // Hiển thị lỗi cụ thể từ API
+        const errorMessage = err.message || 'Đăng nhập thất bại'
+        setError(errorMessage)
+        console.error('Login error details:', {
+          message: errorMessage,
+          code: (err as Error & { code?: string }).code,
+          status: (err as Error & { status?: number }).status,
+          details: (err as Error & { details?: Record<string, unknown> }).details
+        })
       } else {
         setError('Đã có lỗi xảy ra. Vui lòng thử lại.')
       }

@@ -14,9 +14,22 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      const errorData = await response.text()
+      let errorData: Record<string, unknown> = {}
+      try {
+        errorData = await response.json()
+      } catch {
+        const errorText = await response.text()
+        errorData = { message: errorText || `HTTP ${response.status}: ${response.statusText}` }
+      }
+      
+      console.error(`[Proxy Login Error] ${response.status}:`, errorData)
+      
       return NextResponse.json(
-        { error: 'Login failed', details: errorData },
+        { 
+          error: (errorData.message as string) || (errorData.error as string) || 'Login failed',
+          code: (errorData.code as string) || (errorData.error_code as string),
+          details: errorData
+        },
         { status: response.status }
       )
     }

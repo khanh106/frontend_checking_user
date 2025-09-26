@@ -62,13 +62,30 @@ export class ApiClient {
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        const error = new Error(errorData.message || `API Error: ${response.status}`) as Error & {
+        let errorData: Record<string, unknown> = {}
+        try {
+          errorData = await response.json()
+        } catch {
+          errorData = { message: `HTTP ${response.status}: ${response.statusText}` }
+        }
+        
+        const errorMessage = (errorData.message as string) || (errorData.error as string) || `API Error: ${response.status}`
+        const error = new Error(errorMessage) as Error & {
           code?: string
           status?: number
+          details?: Record<string, unknown>
         }
-        error.code = errorData.code
+        error.code = (errorData.code as string) || (errorData.error_code as string)
         error.status = response.status
+        error.details = errorData
+        
+        console.error(`[API Error] ${response.status}:`, {
+          message: errorMessage,
+          code: error.code,
+          details: errorData,
+          url: url
+        })
+        
         throw error
       }
 

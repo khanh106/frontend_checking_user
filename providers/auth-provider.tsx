@@ -44,9 +44,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('🔍 Fallback checking localStorage token:', { token: !!token })
       
       if (token && token !== 'undefined' && token !== 'null') {
-        console.log('✅ Valid localStorage token found')
-        setUser(null) // Không cần user data, chỉ cần token
-        return
+        console.log('✅ Valid localStorage token found, getting user data...')
+        try {
+          // Thử gọi API với token từ localStorage
+          const userData = await apiClient.get('/me')
+          console.log('✅ User data retrieved with localStorage token:', userData)
+          setUser(userData as User)
+          return
+        } catch (tokenError) {
+          console.log('❌ Token invalid, clearing localStorage...')
+          localStorage.removeItem('token')
+          setUser(null)
+          return
+        }
       }
       
       // Nếu không có session hợp lệ
@@ -101,6 +111,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('❌ Login error:', error)
       setIsLoggingIn(false)
+      
+      // Cải thiện error message
+      if (error instanceof Error) {
+        const errorMessage = error.message || 'Đăng nhập thất bại'
+        console.error('❌ Login error details:', {
+          message: errorMessage,
+          code: (error as any).code,
+          status: (error as any).status,
+          details: (error as any).details
+        })
+        throw new Error(errorMessage)
+      }
+      
       throw error
     } finally {
       setIsLoading(false)
