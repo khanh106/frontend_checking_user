@@ -20,9 +20,9 @@ export function middleware(request: NextRequest) {
     return response
   }
   
-  // Redirect trang chủ về login nếu chưa có session
+  // Redirect trang chủ về dashboard (sẽ được handle bởi ProtectedLayout)
   if (pathname === '/') {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
   
   return NextResponse.next()

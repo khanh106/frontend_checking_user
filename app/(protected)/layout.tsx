@@ -25,25 +25,24 @@ export default function ProtectedLayout({
 
   useEffect(() => {
     if (!isLoading && !hasCheckedAuth && !isLoggingIn) {
-      // Đợi lâu hơn để đảm bảo localStorage đã được cập nhật từ login
-      setTimeout(() => {
-        const token = localStorage.getItem('token')
-        const hasValidToken = token && token !== 'undefined' && token !== 'null'
-        
-        console.log('🔍 ProtectedLayout checking token:', { token: !!token, hasValidToken, isLoggingIn })
-        
-        if (!hasValidToken) {
-          console.log('❌ No valid token found, redirecting to login')
-          setIsRedirecting(true)
-          router.push('/login')
-        } else {
-          console.log('✅ Valid token found, allowing access')
-        }
-        
+      console.log('🔍 ProtectedLayout checking auth:', { user: !!user, isLoading, isLoggingIn })
+      
+      // Nếu có user từ AuthProvider thì cho phép truy cập
+      if (user) {
+        console.log('✅ User found in AuthProvider, allowing access')
         setHasCheckedAuth(true)
-      }, 500) // Tăng thời gian đợi lên 500ms
+        return
+      }
+      
+      // Nếu không có user và không đang loading, redirect to login
+      if (!user && !isLoading && !isLoggingIn) {
+        console.log('❌ No user found, redirecting to login')
+        setIsRedirecting(true)
+        router.push('/login')
+        setHasCheckedAuth(true)
+      }
     }
-  }, [isLoading, hasCheckedAuth, isLoggingIn, router])
+  }, [isLoading, hasCheckedAuth, isLoggingIn, router, user])
 
   if (isLoading || isRedirecting) {
     return (
@@ -53,10 +52,8 @@ export default function ProtectedLayout({
     )
   }
 
-  const token = localStorage.getItem('token')
-  const hasValidToken = token && token !== 'undefined' && token !== 'null'
-  
-  if (!hasValidToken) {
+  // Nếu không có user, hiển thị session expired
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-100 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-8">

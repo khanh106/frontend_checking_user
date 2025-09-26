@@ -29,22 +29,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkSession = async () => {
     try {
-      // Kiểm tra session cookie từ server
-      const userData = await apiClient.get('/me')
+      console.log('🔍 Checking session...')
       
-      console.log('✅ Valid session found:', userData)
-      setUser(userData as User)
-      return
-      
-    } catch (error) {
-      console.log('🔍 No valid session cookie, checking localStorage...')
-      
-      // Fallback: kiểm tra localStorage token
+      // Kiểm tra localStorage token trước
       const token = localStorage.getItem('token')
-      console.log('🔍 Fallback checking localStorage token:', { token: !!token })
+      console.log('🔍 Token from localStorage:', { hasToken: !!token, token: token?.substring(0, 20) + '...' })
       
       if (token && token !== 'undefined' && token !== 'null') {
-        console.log('✅ Valid localStorage token found, getting user data...')
         try {
           // Thử gọi API với token từ localStorage
           const userData = await apiClient.get('/me')
@@ -59,8 +50,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
       
-      // Nếu không có session hợp lệ
-      console.log('❌ No valid session found')
+      // Nếu không có token, thử kiểm tra session cookie
+      try {
+        const userData = await apiClient.get('/me')
+        console.log('✅ Valid session cookie found:', userData)
+        setUser(userData as User)
+        return
+      } catch (error) {
+        console.log('❌ No valid session found')
+        setUser(null)
+      }
+      
+    } catch (error) {
+      console.log('❌ Session check failed:', error)
       setUser(null)
     } finally {
       setIsLoading(false)
@@ -73,46 +75,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await apiClient.post<{ user: User, token?: string }>('/auth/login', credentials)
       
-      // Debug: Log response để xem có token không
       console.log('🔍 Login Response:', response)
-      console.log('🔍 Response token:', response.token)
       
-      // Lưu token vào localStorage (backup)
-      if (response.token) {
-        localStorage.setItem('token', response.token)
-        console.log('✅ Token saved to localStorage:', response.token)
-        
-        // Verify token was saved
-        const savedToken = localStorage.getItem('token')
-        console.log('🔍 Token verification:', { saved: !!savedToken, matches: savedToken === response.token })
-        
-        // Nếu token không được lưu đúng, thử lại
-        if (!savedToken || savedToken !== response.token) {
-          console.log('⚠️ Token not saved correctly, retrying...')
-          localStorage.setItem('token', response.token)
-          const retryToken = localStorage.getItem('token')
-          console.log('🔍 Retry verification:', { saved: !!retryToken, matches: retryToken === response.token })
-        }
-      }
-      
-      // Set user data
+      // Set user data trước
       if (response.user) {
         setUser(response.user)
         console.log('✅ User data set:', response.user)
       }
       
-      // Đợi một chút để đảm bảo state đã được set và localStorage đã được cập nhật
-      setTimeout(() => {
-        console.log('🔄 Redirecting to dashboard...')
-        console.log('🔍 Final token check before redirect:', localStorage.getItem('token'))
-        setIsLoggingIn(false)
-        router.push(redirectTo || '/dashboard')
-      }, 300)
+      // Lưu token vào localStorage
+      if (response.token) {
+        localStorage.setItem('token', response.token)
+        console.log('✅ Token saved to localStorage')
+      }
+      
+      // Đợi một chút để đảm bảo state đã được set
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      console.log('🔄 Redirecting to dashboard...')
+      setIsLoggingIn(false)
+      router.push(redirectTo || '/dashboard')
+      
     } catch (error) {
       console.error('❌ Login error:', error)
       setIsLoggingIn(false)
       
-      // Cải thiện error message
       if (error instanceof Error) {
         const errorMessage = error.message || 'Đăng nhập thất bại'
         console.error('❌ Login error details:', {

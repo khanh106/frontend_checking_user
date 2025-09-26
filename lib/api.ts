@@ -63,10 +63,10 @@ export class ApiClient {
 
       clearTimeout(timeoutId)
 
-      // Don't retry 401 for auth endpoints (login, register, me, etc.)
-      if (response.status === 401 && retryCount === 0 && !endpoint.includes('/auth/') && !endpoint.includes('/me')) {
-        await this.refreshToken()
-        return this.request<T>(endpoint, options, retryCount + 1)
+      // Don't retry 401 for any endpoints - let AuthProvider handle it
+      if (response.status === 401) {
+        console.log('🔍 401 Unauthorized - letting AuthProvider handle')
+        // Don't auto-refresh, let AuthProvider handle session management
       }
 
       if (!response.ok) {
@@ -139,7 +139,8 @@ export class ApiClient {
     try {
       await this.post('/auth/refresh')
     } catch (error) {
-      window.location.href = '/login'
+      // Don't auto-redirect, let AuthProvider handle
+      console.log('🔍 Token refresh failed - letting AuthProvider handle')
       throw error
     }
   }
