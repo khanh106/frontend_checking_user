@@ -6,7 +6,7 @@
     },
     "headers": [
       {
-        "source": "/(.*)",
+        "source": "/api/proxy/(.*)",
         "headers": [
           {
             "key": "Access-Control-Allow-Origin",
@@ -19,16 +19,8 @@
           {
             "key": "Access-Control-Allow-Headers",
             "value": "Content-Type, Authorization, X-Requested-With"
-          },
-          {
-            "key": "Access-Control-Allow-Credentials",
-            "value": "true"
           }
         ]
       }
-    ],
-    "env": {
-      "NEXT_PUBLIC_API_BASE_URL": "https://api.tira.click",
-      "NEXT_PUBLIC_WS_URL": "wss://api.tira.click/ws"
-    }
+    ]
   }

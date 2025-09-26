@@ -11,8 +11,8 @@ export class ApiClient {
 
   constructor() {
     this.config = {
-      baseURL: process.env.NODE_ENV === 'production' ? 'https://api.tira.click' : 'http://localhost:3000/api',
-      timeout: 10000,
+      baseURL: '/api/proxy',
+      timeout: 30000,
       retries: 3
     }
   }
