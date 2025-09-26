@@ -1,3 +1,5 @@
+import { vercelConfig } from '../config/vercel'
+
 interface ApiConfig {
   baseURL: string
   timeout: number
@@ -109,6 +111,11 @@ class ApiClient {
         credentials: 'include',
         mode: 'cors',
         cache: 'no-cache',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          ...options.headers,
+        },
       })
 
       clearTimeout(timeoutId)
@@ -217,10 +224,10 @@ class ApiClient {
 }
 
 const apiClient = new ApiClient({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.tira.click',
-  timeout: 15000,
-  retries: 3,
-  retryDelay: 1000,
+  baseURL: vercelConfig.api.baseURL,
+  timeout: vercelConfig.api.timeout,
+  retries: vercelConfig.api.retries,
+  retryDelay: 2000,
 })
 
 export default apiClient

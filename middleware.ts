@@ -4,22 +4,26 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   
-  // Debug: Log all cookies để xem backend set cookie gì
-  console.log('🔍 Middleware Debug:', {
-    pathname,
-    cookies: request.cookies.getAll().map(c => ({ name: c.name, value: c.value.substring(0, 50) + '...' }))
-  })
+  // Handle CORS for API routes
+  if (pathname.startsWith('/api/')) {
+    const response = NextResponse.next()
+    
+    response.headers.set('Access-Control-Allow-Origin', '*')
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 200, headers: response.headers })
+    }
+    
+    return response
+  }
   
   // Redirect trang chủ về login nếu chưa có session
   if (pathname === '/') {
-    console.log('🏠 Home page accessed - redirecting to login')
     return NextResponse.redirect(new URL('/login', request.url))
   }
-  
-  // DISABLE MIDDLEWARE AUTHENTICATION - Để AuthProvider xử lý
-  // Vì middleware không thể truy cập localStorage
-  console.log('🔒 Protected route accessed:', pathname)
-  console.log('✅ Allowing access - AuthProvider will handle authentication')
   
   return NextResponse.next()
 }
@@ -27,6 +31,7 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/',
+    '/api/:path*',
     '/(protected)/:path*',
     '/(auth)/:path*',
   ],

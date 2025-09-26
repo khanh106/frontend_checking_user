@@ -3,13 +3,30 @@ import createMDX from '@next/mdx'
 
 const nextConfig: NextConfig = {
   pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
-  async rewrites() {
+  serverExternalPackages: ['leaflet'],
+  images: {
+    domains: ['api.tira.click'],
+  },
+  async headers() {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://api.tira.click/:path*',
+        headers: [
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, OPTIONS',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'Content-Type, Authorization, X-Requested-With',
+          },
+        ],
       },
-    ];
+    ]
   },
 };
 
