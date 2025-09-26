@@ -37,6 +37,7 @@ class ApiClient {
       method: options.method,
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         ...options.headers,
       },
       body: options.body ? JSON.stringify(options.body) : undefined,
@@ -106,6 +107,8 @@ class ApiClient {
         ...options,
         signal: controller.signal,
         credentials: 'include',
+        mode: 'cors',
+        cache: 'no-cache',
       })
 
       clearTimeout(timeoutId)
@@ -118,8 +121,16 @@ class ApiClient {
 
   private async handleResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`)
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+      
+      try {
+        const errorData = await response.json()
+        errorMessage = errorData.message || errorData.error || errorMessage
+      } catch {
+        // If response is not JSON, use status text
+      }
+      
+      throw new Error(errorMessage)
     }
 
     const contentType = response.headers.get('content-type')
@@ -132,11 +143,15 @@ class ApiClient {
 
   private handleError(error: unknown): never {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error('Request timeout')
+      throw new Error('Request timeout - server không phản hồi')
     }
 
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Network error - please check your connection')
+      throw new Error('Lỗi kết nối - vui lòng kiểm tra mạng và thử lại')
+    }
+
+    if (error instanceof Error && error.message.includes('CORS')) {
+      throw new Error('Lỗi CORS - server không cho phép truy cập từ domain này')
     }
 
     throw error
@@ -202,8 +217,8 @@ class ApiClient {
 }
 
 const apiClient = new ApiClient({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api',
-  timeout: 10000,
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.tira.click',
+  timeout: 15000,
   retries: 3,
   retryDelay: 1000,
 })
